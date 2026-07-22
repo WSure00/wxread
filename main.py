@@ -118,7 +118,7 @@ if PUSH_METHOD not in (None, ''):
         f"微信读书自动阅读完成。\n阅读时长：{read_minutes} 分钟。",
         PUSH_METHOD,
         is_success=True,
-        title=f"微信阅读-成功|{read_minutes}m",
+        title=f"微信阅读-成功 {read_minutes}m",
     )
 else:
     logging.info("未配置推送渠道，跳过推送。")
