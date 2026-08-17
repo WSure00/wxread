@@ -24,10 +24,12 @@ class PushNotification:
         self.server_chan_url = "https://sctapi.ftqq.com/{}.send"
         self.wxpusher_simple_url = "https://wxpusher.zjiecode.com/api/send/message/{}/{}"
         self.headers = {"Content-Type": "application/json"}
-        self.proxies = {
-            "http": os.getenv("http_proxy"),
-            "https": os.getenv("https_proxy"),
-        }
+        proxies = {}
+        if os.getenv("http_proxy"):
+            proxies["http"] = os.getenv("http_proxy")
+        if os.getenv("https_proxy"):
+            proxies["https"] = os.getenv("https_proxy")
+        self.proxies = proxies
 
     def push_pushplus(self, content, token, is_success):
         attempts = 5
