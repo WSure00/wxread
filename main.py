@@ -56,7 +56,7 @@ def get_wr_skey():
     return None
 
 def fix_no_synckey():
-    requests.post(FIX_SYNCKEY_URL, headers=headers, cookies=cookies,data=json.dumps({"bookIds":["3300060341"]}, separators=(',', ':')))
+    requests.post(FIX_SYNCKEY_URL, headers=headers, cookies=cookies,data=json.dumps({"bookIds":["3300060341"]}, separators=(',', ':')), timeout=15)
 
 refresh_print = setup_logging()
 
@@ -70,7 +70,8 @@ def refresh_cookie():
     else:
         ERROR_CODE = "无法获取新密钥或者 WXREAD_CURL_BASH 配置有误，终止运行。"
         logging.error(ERROR_CODE)
-        push(ERROR_CODE, PUSH_METHOD, is_success=False)
+        # 阅读任务不再直接推送，改由每日 check 任务统一检查并告警
+        # push(ERROR_CODE, PUSH_METHOD, is_success=False)
         raise Exception(ERROR_CODE)
 
 refresh_cookie()
@@ -92,7 +93,7 @@ while index <= READ_NUM:
 
     refresh_print(f"阅读进度: 第 {index}/{READ_NUM} 次，已完成 {(index - 1) * 0.5:.1f} 分钟")
     logging.debug("data: %s", data)
-    response = requests.post(READ_URL, headers=headers, cookies=cookies, data=json.dumps(data, separators=(',', ':')))
+    response = requests.post(READ_URL, headers=headers, cookies=cookies, data=json.dumps(data, separators=(',', ':')), timeout=15)
     resData = response.json()
     logging.debug("response: %s", resData)
 
@@ -109,16 +110,17 @@ while index <= READ_NUM:
         logging.warning("cookie 已过期，尝试刷新...")
         refresh_cookie()
 
-logging.info("阅读脚本已完成。")
+logging.info("阅读脚本已完成。（按要求不推送成功消息，由每日 check 任务统一检查）")
 
-if PUSH_METHOD not in (None, ''):
-    logging.info("开始推送...")
-    read_minutes = (index - 1) * 0.5
-    push(
-        f"微信读书自动阅读完成。\n阅读时长：{read_minutes} 分钟。",
-        PUSH_METHOD,
-        is_success=True,
-        title=f"微信阅读-成功 {read_minutes}m",
-    )
-else:
-    logging.info("未配置推送渠道，跳过推送。")
+# 原成功推送逻辑已注释：阅读任务不再发消息，改由每日 check 任务统一检查
+# if PUSH_METHOD not in (None, ''):
+#     logging.info("开始推送...")
+#     read_minutes = (index - 1) * 0.5
+#     push(
+#         f"微信读书自动阅读完成。\n阅读时长：{read_minutes} 分钟。",
+#         PUSH_METHOD,
+#         is_success=True,
+#         title=f"微信阅读-成功 {read_minutes}m",
+#     )
+# else:
+#     logging.info("未配置推送渠道，跳过推送。")
