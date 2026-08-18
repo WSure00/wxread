@@ -12,7 +12,9 @@ from config import PUSH_METHOD
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 BJT = timezone(timedelta(hours=8))
-WORKFLOW_FILE = "wxread.yml"
+# 注意：API 路径只认 workflow 文件名（或数字 ID），不认 workflow 显示名
+# 阅读任务对应的文件是 deploy.yml（显示名为 wxread）
+WORKFLOW_FILE = "deploy.yml"
 
 
 def today_midnight_utc():
