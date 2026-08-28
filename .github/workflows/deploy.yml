@@ -6,15 +6,20 @@ concurrency:
 
 on:
   schedule:
-    # 道一·凌晨主任务：北京时间每天 00:23（UTC 前一天 16:23）
-    # 分钟数故意避开整点，降低被 GitHub Actions 调度高峰延迟/丢弃的概率
+    # 原子化幂等设计：每个时间槽执行完全相同的操作——
+    # guard 检查今天是否已读 → 已读则直接退出，未读则执行阅读，失败则告警。
+    # 多设几个时间槽互为兑底，任一槽被 GitHub 调度延迟/丢弃，下一槽自动补上。
+    # 分钟数避开整点，降低被调度高峰延迟/丢弃的概率。
+    # 道一·主任务：北京时间每天 00:23（UTC 前一天 16:23）
     - cron: '23 16 * * *'
-    # 早间任务：北京时间每天 05:00（UTC 前一天 21:00）
-    #- cron: '0 21 * * *'
-    # 午间任务：北京时间每天 11:40（UTC 03:40）
-    #- cron: '40 3 * * *'
-    # 晚间任务：北京时间每天 22:00（UTC 14:00）
-    #- cron: '0 14 * * *'
+    # 道二·上午兑底：北京时间每天 08:41（UTC 00:41）
+    - cron: '41 0 * * *'
+    # 道三·晚间终检：北京时间每天 17:37（UTC 09:37）
+    - cron: '37 9 * * *'
+    # 其他可选时段（保持同样原子逻辑，需要时取消注释）：
+    # - cron: '0 21 * * *'   # BJT 05:00
+    # - cron: '40 3 * * *'   # BJT 11:40
+    # - cron: '0 14 * * *'   # BJT 22:00
   workflow_dispatch:  # 手动触发
 
 jobs:
@@ -64,6 +69,17 @@ jobs:
 
       run: |
         python main.py
+
+    - name: Alert on failure
+      if: failure()
+      env:
+        PUSH_METHOD: ${{ secrets.PUSH_METHOD }}
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        WXPUSHER_SPT: ${{ secrets.WXPUSHER_SPT }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        SERVERCHAN_SPT: ${{ secrets.SERVERCHAN_SPT }}
+      run: python alert.py
 
   keepalive-job:
     name: Keepalive Workflow

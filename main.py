@@ -70,7 +70,7 @@ def refresh_cookie():
     else:
         ERROR_CODE = "无法获取新密钥或者 WXREAD_CURL_BASH 配置有误，终止运行。"
         logging.error(ERROR_CODE)
-        # 阅读任务不再直接推送，改由每日 check 任务统一检查并告警
+        # 阅读任务不再直接推送，改由 workflow 的告警步骤（alert.py）统一推送
         # push(ERROR_CODE, PUSH_METHOD, is_success=False)
         raise Exception(ERROR_CODE)
 
@@ -110,7 +110,7 @@ while index <= READ_NUM:
         logging.warning("cookie 已过期，尝试刷新...")
         refresh_cookie()
 
-logging.info("阅读脚本已完成。（按要求不推送成功消息，由每日 check 任务统一检查）")
+logging.info("阅读脚本已完成。（按要求不推送成功消息；失败时由 workflow 的告警步骤推送）")
 
 # 原成功推送逻辑已注释：阅读任务不再发消息，改由每日 check 任务统一检查
 # if PUSH_METHOD not in (None, ''):
