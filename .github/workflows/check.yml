@@ -6,8 +6,10 @@ concurrency:
 
 on:
   schedule:
-    # 每天北京时间 18:00（UTC 10:00）检查今天的阅读任务是否成功执行
-    - cron: "0 10 * * *"
+    # 道二·上午自愈：北京时间每天 08:41（UTC 00:41），未成功则自动补跑
+    - cron: "41 0 * * *"
+    # 道三·晚间终检：北京时间每天 17:37（UTC 09:37），最终兜底，仍失败才推送告警
+    - cron: "37 9 * * *"
   workflow_dispatch: # 手动触发
 
 jobs:
@@ -15,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     environment: AutoRead # 指定环境
     permissions:
-      actions: read # 用于查询 wxread 工作流的运行记录
+      actions: write # 查询运行记录 + 触发 workflow_dispatch 补跑
 
     steps:
       - name: Checkout repository

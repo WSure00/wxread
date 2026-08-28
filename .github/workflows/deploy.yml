@@ -6,8 +6,9 @@ concurrency:
 
 on:
   schedule:
-    # 凌晨任务：北京时间每天 01:00（UTC 前一天 17:00）
-    - cron: '0 17 * * *'
+    # 道一·凌晨主任务：北京时间每天 00:23（UTC 前一天 16:23）
+    # 分钟数故意避开整点，降低被 GitHub Actions 调度高峰延迟/丢弃的概率
+    - cron: '23 16 * * *'
     # 早间任务：北京时间每天 05:00（UTC 前一天 21:00）
     #- cron: '0 21 * * *'
     # 午间任务：北京时间每天 11:40（UTC 03:40）
@@ -20,6 +21,8 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     environment: AutoRead  # 指定环境
+    permissions:
+      actions: read  # 用于查询本工作流今日是否已有成功运行（防重复）
 
     steps:
 
@@ -41,7 +44,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install certifi==2024.8.30 charset-normalizer==3.4.0 idna==3.10 requests==2.32.3 urllib3==2.2.3
 
+    - name: Guard - skip if today's read already succeeded
+      id: guard
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python guard.py
+
     - name: Run deployment script
+      if: steps.guard.outputs.skip != 'true'
       env:
         WXREAD_CURL_BASH: ${{ secrets.WXREAD_CURL_BASH }}
         PUSH_METHOD: ${{ secrets.PUSH_METHOD }}
