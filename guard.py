@@ -11,6 +11,12 @@ WORKFLOW_FILE = "deploy.yml"
 
 
 def main():
+    if os.getenv("FORCE") == "true":
+        # 手动触发带 force=true 时强制执行（如更新 key 后验证），跳过去重检查
+        write_output("skip=false")
+        print("force=true，跳过 guard 去重检查")
+        return
+
     repo = os.getenv("GITHUB_REPOSITORY")
     token = os.getenv("GITHUB_TOKEN")
     if not repo or not token:
